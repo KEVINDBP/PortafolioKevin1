@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JustiIA</title>
+    <!-- Carga de Tailwind CSS para un diseño moderno y responsivo --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Lucide --><script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Configuramos la fuente Inter para un look limpio */
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; color: #1f2937; } /* Color de texto ajustado a oscuro */
+        
+
+       /*PRUEBA DE IMAGEN*/
+        body {
+            background-image: url('/img.png'); /* Usa la URL de la imagen que proporcionaste */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Mantiene el fondo fijo al hacer scroll */
+            background-repeat: no-repeat;
+            display: flex; /* Para centrar el contenido */
+            justify-content: center; /* Centrado horizontal */
+            align-items: center; /* Centrado vertical */
+            min-height: 90vh; /* Asegura que ocupe toda la altura de la vista */
+            padding: 1rem; /* Pequeño padding general */
+        }
+
+
+
+
+
+
+
+
+        /* Fondo de pantalla */
+        body {
+            /* Usamos un color simple ya que no tenemos acceso a /img.png */
+            background-color: #f0f4f8; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 90vh; 
+            padding: 1rem; 
+        }
+        
+        #chat-container { 
+            height: 80vh; 
+            max-height: 900px; 
+            width: 100%;
+            max-width: 900px; 
+            background-color: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(5px); 
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        #messages-container { scroll-behavior: smooth; background-color: #e5e7eb; }
+        
+        #send-button, #record-button, #attach-button { transition: background-color 0.2s, transform 0.1s; }
+        #send-button:hover, #attach-button:hover { background-color: #d8c237; }
+        #record-button.recording { background-color: #ef4444; } 
+        #record-button:not(.recording):hover { background-color: #3b82f6; } 
+        
+        .user-message { background-color: #1e40af; color: #f2f2f8; align-self: flex-end; } /* Azul oscuro */
+        .ai-message { background-color: #f3f4f6; color: #1f2937; border: 1px solid #d1d5db; align-self: flex-start; } /* Gris claro/Blanco */
+        .message-bubble { border-radius: 1.5rem 1.5rem 0.5rem 1.5rem; max-width: 85%; padding: 1rem; margin-bottom: 0.75rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
+        .ai-message.message-bubble { border-radius: 1.5rem 1.5rem 1.5rem 0.5rem; }
+
+        /* Estilos para el input de archivo oculto */
+        #file-input { display: none; }
+        .file-attachment {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #374151;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #f2f2f8;
+            max-width: fit-content;
+        }
+        .file-attachment svg { margin-right: 0.5rem; }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex flex-col items-center min-h-screen">
+
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl p-6 flex flex-col" id="chat-container">
+        <!-- Título --><h1 class="text-3xl font-extrabold mb-4 text-center text-[#1E3A8A] border-b-4 border-[#ffcc00] pb-2">
+            JustiIA <span class="text-xl font-normal text-gray-600">| Asistente Judicial Colombiano</span>
+        </h1>
+
+        <!-- Contenedor de Mensajes --><div id="messages-container" class="flex-grow overflow-y-auto space-y-4 p-4 mb-4 rounded-xl bg-[#F9FAFB]">
+            <!-- Mensaje de Bienvenida inicial se mostrará al cargar el script --></div>
+
+        <!-- Área de Input --><div class="flex space-x-3 items-center">
+            <!-- Botón de Adjuntar Documento --><input type="file" id="file-input" accept=".txt,.pdf,.docx">
+            <button id="attach-button" 
+                    class="bg-[#ffcc00] hover:bg-[#d8c237] text-gray-900 font-bold py-3 px-4 rounded-xl flex items-center justify-center shadow-lg transition duration-200"
+                    aria-label="Adjuntar documento" title="Adjuntar Documento">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-paperclip"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"/></svg>
+            </button>
+            
+            <!-- Botón de Grabar Audio --><button id="record-button" 
+                    class="bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center shadow-lg transition duration-200"
+                    aria-label="Grabar nota de voz" title="Grabar Nota de Voz">
+                <span id="record-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                </span>
+                <span id="recording-status" class="hidden ml-2 text-sm">Grabando...</span>
+            </button>
+
+            <input type="text" id="user-input" placeholder="Escribe tu consulta legal o adjunta un documento..."
+                   class="flex-grow p-3 rounded-xl border border-gray-300 bg-white text-gray-900 focus:ring-[#1E3A8A] focus:border-[#1E3A8A] transition duration-150 shadow-md"
+                   onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button id="send-button" onclick="sendMessage()"
+                    class="bg-[#1E3A8A] hover:bg-[#152865] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center shadow-lg transition duration-200"
+                    aria-label="Enviar mensaje">
+                <span id="send-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </span>
+                <span id="loading-spinner" class="hidden animate-spin h-5 w-5 border-4 border-t-4 border-t-white border-gray-600 rounded-full"></span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Contenedor para mensajes de sistema o errores --><div id="system-message" class="mt-4 p-3 max-w-3xl w-full text-center text-red-700 bg-red-100 border border-red-300 rounded-xl hidden"></div>
+
+    <script type="module">
+        const BACKEND_URL = 'http://localhost:5000/api/chat'; // Apunta al backend Flask
+        
+        let chatHistory = []; 
+        let currentAudioBlob = null; // Para almacenar la nota de voz temporalmente
+        let currentFile = null; // Para almacenar el documento temporalmente
+
+        // --- Variables para la Grabación de Audio ---
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        const recordButton = document.getElementById('record-button');
+        const recordingStatus = document.getElementById('recording-status');
+
+        // --- Variables para Adjuntar Archivos ---
+        const fileInput = document.getElementById('file-input');
+        const attachButton = document.getElementById('attach-button');
+        const userInputElement = document.getElementById('user-input');
+
+        const initializeAppOnly = () => {
+            const welcomeMessage = "¡Bienvenido a JustiIA! Soy tu asistente de IA especializado en el marco legal colombiano. Puedes preguntarme sobre leyes, jurisprudencia, o subir documentos para análisis. ¿Cómo puedo coadyuvarte hoy?";
+            chatHistory.push({ 
+                role: "model", 
+                parts: [{ text: welcomeMessage }] 
+            });
+            displayMessage(welcomeMessage, 'ai');
+            
+            document.getElementById('system-message').classList.add('hidden');
+        };
+
+        const fetchWithRetry = async (url, options, maxRetries = 3) => {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429) { 
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        console.warn(`Tasa límite alcanzada. Reintentando en ${delay / 1000}s...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    if (!response.ok) {
+                         const errorText = await response.text();
+                         throw new Error(`Error HTTP ${response.status}: ${errorText}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error; 
+                    const delay = Math.pow(2, i) * 2000 + Math.random() * 1000;
+                    console.error(`Error en el intento ${i + 1}. Reintentando en ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        };
+
+        const displayMessage = (text, sender, attachment = null) => {
+            const container = document.getElementById('messages-container');
+            const messageDiv = document.createElement('div');
+            
+            let classes = "message-bubble ";
+            let senderName = "";
+            let nameClass = "";
+
+            if (sender === 'user') {
+                classes += "user-message self-end";
+                senderName = "Tú";
+                nameClass = "text-white";
+            } else {
+                classes += "ai-message self-start";
+                senderName = "JustiIA";
+                nameClass = "text-[#1E3A8A]"; // Azul oscuro de JustiIA
+            }
+
+            messageDiv.className = classes;
+            // Usamos un div para el nombre/rol y otro para el contenido principal
+            let contentHTML = `<div class="text-sm font-semibold mb-1 ${nameClass}">${senderName}</div>`;
+            
+            if (attachment) {
+                let icon = '';
+                if (attachment.type === 'audio') {
+                    icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>`;
+                } else if (attachment.type === 'document') {
+                     icon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`;
+                }
+                // Adjuntar el elemento visual del archivo/audio
+                contentHTML += `<div class="file-attachment text-gray-100">${icon}<span>${attachment.name}</span></div>`;
+            }
+            
+            // Si el texto es solo el prompt de un archivo, no lo mostramos de nuevo
+            if (text.trim() || !attachment) {
+                 contentHTML += `<p class="mt-1 text-base">${text.replace(/\n/g, '<br>')}</p>`;
+            }
+
+            messageDiv.innerHTML = contentHTML;
+            container.appendChild(messageDiv);
+            
+            container.scrollTop = container.scrollHeight;
+        };
+
+        window.sendMessage = async () => {
+            const userInput = userInputElement.value.trim();
+
+            // Solo permitir envío si hay texto O hay un archivo/audio pendiente de envío
+            if (!userInput && !currentAudioBlob && !currentFile) return;
+
+            const systemMessage = document.getElementById('system-message');
+            systemMessage.classList.add('hidden'); 
+
+            let displayPrompt = userInput;
+            let attachmentInfo = null;
+
+            // 1. Manejar y mostrar el mensaje del usuario (texto, audio o documento)
+            if (currentFile) {
+                displayPrompt = userInput || `Analizar documento: ${currentFile.name}`;
+                attachmentInfo = { type: 'document', name: currentFile.name };
+            } else if (currentAudioBlob) {
+                displayPrompt = userInput || `Analizar nota de voz: ${currentAudioBlob.name}`;
+                attachmentInfo = { type: 'audio', name: currentAudioBlob.name };
+            }
+            
+            // Mostrar el mensaje en el chat y agregar al historial
+            displayMessage(displayPrompt, 'user', attachmentInfo);
+
+            // Agregar el prompt de texto al historial 
+            // NOTA: El contenido del archivo NO se agrega aquí; el backend lo manejará
+            chatHistory.push({ role: "user", parts: [{ text: displayPrompt }] });
+            
+            // Limpiar input de texto
+            userInputElement.value = '';
+
+            // 2. Enviar a la IA a través del backend
+            await sendContentToAI(userInput);
+        };
+
+        const sendContentToAI = async (textPrompt) => {
+            const sendButton = document.getElementById('send-button');
+            const sendIcon = document.getElementById('send-icon');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            
+            sendButton.disabled = true;
+            recordButton.disabled = true;
+            attachButton.disabled = true;
+            sendIcon.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            const formData = new FormData();
+            
+            // 1. Enviar el historial de chat como JSON (excluyendo el último, que es el actual)
+            formData.append('chat_history', JSON.stringify(chatHistory.slice(0, -1))); 
+            formData.append('text_prompt', textPrompt); 
+
+            // 2. Adjuntar Audio si existe
+            if (currentAudioBlob) {
+                // Whisper requiere un formato específico, pero Blob y File funcionan en FormData
+                const audioFile = new File([currentAudioBlob], currentAudioBlob.name, { type: currentAudioBlob.type });
+                formData.append('audio_file', audioFile, currentAudioBlob.name);
+            }
+
+            // 3. Adjuntar Documento si existe
+            if (currentFile) {
+                formData.append('document_file', currentFile, currentFile.name);
+            }
+
+            try {
+                const response = await fetchWithRetry(BACKEND_URL, {
+                    method: 'POST',
+                    body: formData 
+                });
+                
+                const result = await response.json();
+                
+                let aiResponseText;
+
+                if (result.response) {
+                    aiResponseText = result.response;
+                } else if (result.error) {
+                    aiResponseText = `Error del Backend (JustiIA): ${result.error}`;
+                    console.error("Error del Backend:", result.error);
+                } else {
+                    aiResponseText = "Lo siento, el backend no devolvió una respuesta válida.";
+                    console.error("Respuesta inesperada del backend:", result);
+                }
+
+                displayMessage(aiResponseText, 'ai');
+
+                // 4. Actualizar historial con la respuesta de la IA
+                chatHistory.push({ role: "model", parts: [{ text: aiResponseText }] });
+
+            } catch (error) {
+                const errorMessage = `Error de conexión. Asegúrate de que el servidor Python (Flask) esté corriendo en ${BACKEND_URL}. Detalles: ${error.message}`;
+                document.getElementById('system-message').textContent = errorMessage;
+                document.getElementById('system-message').classList.remove('hidden');
+            } finally {
+                // Limpiar estados de archivos y botones
+                currentAudioBlob = null;
+                currentFile = null;
+                fileInput.value = '';
+                userInputElement.placeholder = "Escribe tu consulta legal o adjunta un documento...";
+
+                sendButton.disabled = false;
+                recordButton.disabled = false;
+                attachButton.disabled = false;
+                sendIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+                userInputElement.focus();
+            }
+        };
+
+
+        // --- Lógica de Grabación de Audio ---
+        recordButton.addEventListener('click', async () => {
+            if (currentFile) {
+                document.getElementById('system-message').textContent = 'Error: Hay un archivo pendiente. Por favor, envíalo o bórralo primero.';
+                document.getElementById('system-message').classList.remove('hidden');
+                return;
+            }
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        audioBlob.name = `NotaDeVoz_${Date.now()}.webm`; 
+                        currentAudioBlob = audioBlob;
+                        
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        userInputElement.placeholder = `Nota de voz de ${audioBlob.name} lista para transcribir. Añade texto si lo deseas, o presiona Enviar.`;
+                        
+                        isRecording = false;
+                        recordButton.classList.remove('recording');
+                        recordingStatus.classList.add('hidden');
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordButton.classList.add('recording');
+                    recordingStatus.classList.remove('hidden');
+                } catch (error) {
+                    document.getElementById('system-message').textContent = 'Error: No se pudo acceder al micrófono. Asegúrate de dar permiso.';
+                    document.getElementById('system-message').classList.remove('hidden');
+                }
+            } else {
+                mediaRecorder.stop();
+            }
+        });
+
+        // --- Lógica de Adjuntar Archivos ---
+        attachButton.addEventListener('click', () => {
+             if (currentAudioBlob) {
+                document.getElementById('system-message').textContent = 'Error: Hay una nota de voz pendiente. Por favor, envíala o descártala.';
+                document.getElementById('system-message').classList.remove('hidden');
+                return;
+            }
+            fileInput.click(); 
+        });
+
+        fileInput.addEventListener('change', async () => {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                currentFile = file;
+                
+                userInputElement.placeholder = `Documento ${file.name} listo para analizar. Añade tu consulta o presiona Enviar.`;
+            }
+        });
+
+        // Inicializar la aplicación al cargar la ventana
+        window.onload = initializeAppOnly;
+    </script>
+</body>
+</html>
